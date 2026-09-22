@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>advero-sdk — basic example (single ad slot)</title>
+</head>
+<body>
+  <h1>My Website</h1>
+  <p>Some content above the ad.</p>
+
+  <div id="ad-slot-1"></div>
+
+  <p>Some content below the ad.</p>
+
+  <div id="ad-slot-2"></div>
+
+  <script src="https://cdn.jsdelivr.net/gh/cuongcds/advero-sdk@0.1.1/dist/sdk.min.js"></script>
+  <script>
+    // baseUrl and placementCode are never defaulted by the SDK — replace
+    // both with the real values for your account (see the "Getting your
+    // baseUrl/placementCode" section in ../README.md).
+    AdveroSDK.init({
+      baseUrl: 'https://ads-advero.domain.com', // your Advero ad-serving endpoint — required, no default
+    });
+
+    AdveroSDK.render({
+      el: '#ad-slot-1',
+      placementCode: 'YOUR_PLACEMENT_CODE', // required, no default
+    });
+
+    AdveroSDK.render({
+      el: '#ad-slot-2',
+      placementCode: 'YOUR_PLACEMENT_CODE', // required, no default
+      // showPlaceholder: false
+    });
+  </script>
+</body>
+</html>

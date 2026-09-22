@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>advero-sdk — lazy render (only fetch an ad once the slot is visible)</title>
+</head>
+<body>
+  <p style="height: 150vh">Scroll down to see the ad slot render.</p>
+
+  <div id="ad-lazy"></div>
+
+  <p style="height: 100vh">More content below.</p>
+
+  <script src="https://cdn.jsdelivr.net/gh/cuongcds/advero-sdk@0.1.1/dist/sdk.min.js"></script>
+  <script>
+    // baseUrl and placementCode are never defaulted by the SDK — replace
+    // both with the real values for your account (see the "Getting your
+    // baseUrl/placementCode" section in ../README.md).
+    AdveroSDK.init({
+      baseUrl: 'https://ads-advero.domain.com', // your Advero ad-serving endpoint — required, no default
+    });
+
+    // AdveroSDK.render() does one fetch per call — for a slot far down the
+    // page, delay that fetch until the slot actually scrolls into view
+    // instead of firing it (and holding the impression) on page load.
+    const slot = document.querySelector('#ad-lazy');
+    const observer = new IntersectionObserver((entries) => {
+      for (const entry of entries) {
+        if (entry.isIntersecting) {
+          AdveroSDK.render({ el: entry.target, placementCode: 'YOUR_PLACEMENT_CODE' }); // required, no default
+          observer.unobserve(entry.target);
+        }
+      }
+    });
+    observer.observe(slot);
+  </script>
+</body>
+</html>

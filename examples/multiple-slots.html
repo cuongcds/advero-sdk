@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>advero-sdk — multiple ad slots on one page</title>
+</head>
+<body>
+  <header>
+    <div id="ad-header"></div>
+  </header>
+
+  <main>
+    <article>
+      <h1>Article title</h1>
+      <p>First paragraph...</p>
+      <div id="ad-in-article"></div>
+      <p>Rest of the article...</p>
+    </article>
+  </main>
+
+  <aside>
+    <div id="ad-sidebar"></div>
+  </aside>
+
+  <script src="https://cdn.jsdelivr.net/gh/cuongcds/advero-sdk@0.1.1/dist/sdk.min.js"></script>
+  <script>
+    // init() is called once per page, regardless of how many slots you render.
+    AdveroSDK.init({
+      baseUrl: 'https://ads-advero.domain.com',
+    });
+
+    // render() is called once per slot, each with its own placementCode (a
+    // different placement in the Advero dashboard — e.g. a leaderboard for
+    // the header, a rectangle for the sidebar). A slot that has no eligible
+    // ad right now is simply left empty — this is normal, not an error, so
+    // there is nothing to catch here.
+    AdveroSDK.render({ el: '#ad-header', placementCode: 'YOUR_HEADER_PLACEMENT_CODE' });
+    AdveroSDK.render({ el: '#ad-in-article', placementCode: 'YOUR_IN_ARTICLE_PLACEMENT_CODE' });
+    AdveroSDK.render({ el: '#ad-sidebar', placementCode: 'YOUR_SIDEBAR_PLACEMENT_CODE' });
+  </script>
+</body>
+</html>
