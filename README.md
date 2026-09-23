@@ -100,6 +100,7 @@ front of real visitors.
 | `showPlaceholder` | no | When there's no eligible advertiser creative, the API returns a placeholder ("Advertise here" banner linking to this placement's Marketplace listing) instead of leaving the slot empty. Defaults to `true`. Pass `false` to render nothing in that case instead of the placeholder. |
 
 Behavior:
+
 - On success (`200` with `{ creative_url, click_url }`), renders `<a href="{click_url}" target="_blank" rel="noopener"><img src="{creative_url}"></a>` inside `el`. This also covers the placeholder response (`{ ..., placeholder: true }`) unless `showPlaceholder: false` was passed.
 - On `204 No Content` or any network/fetch error, renders nothing and does **not** throw — an empty ad slot is normal (no eligible campaign for that placement right now), not a failure.
 - Throws only for integration mistakes: missing/invalid `placementCode`, `el` that doesn't resolve to an element, or calling `render()` before `init()`.
