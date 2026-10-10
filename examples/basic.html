@@ -14,24 +14,24 @@
 
   <div id="ad-slot-2"></div>
 
-  <script src="https://cdn.jsdelivr.net/gh/cuongcds/advero-sdk@0.1.1/dist/sdk.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/gh/cuongcds/advero-sdk@0.1.2/dist/sdk.min.js"></script>
   <script>
     // baseUrl and placementCode are never defaulted by the SDK — replace
     // both with the real values for your account (see the "Getting your
     // baseUrl/placementCode" section in ../README.md).
     AdveroSDK.init({
-      baseUrl: 'https://ads-advero.domain.com', // your Advero ad-serving endpoint — required, no default
+      baseUrl: 'https://advero.shplinks.io', // your Advero ad-serving endpoint — required, no default
     });
 
     AdveroSDK.render({
       el: '#ad-slot-1',
-      placementCode: 'YOUR_PLACEMENT_CODE', // required, no default
+      placementCode: 'ap-dfcdc4fa7ec6f82824ae-6ac8afb8', // required, no default
     });
 
     AdveroSDK.render({
       el: '#ad-slot-2',
-      placementCode: 'YOUR_PLACEMENT_CODE', // required, no default
-      // showPlaceholder: false
+      placementCode: 'ap-dfcdc4fa7ec6f82824ae-89fbfed7', // required, no default
+      showPlaceholder: true
     });
   </script>
 </body>

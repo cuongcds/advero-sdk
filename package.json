@@ -1,6 +1,6 @@
 {
   "name": "advero-sdk",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "Advero Web SDK — embed script for publishers to display Advero ads. Published to npm and served via jsDelivr (see docs/TECHNICAL_DESIGN.md §2.1).",
   "type": "module",
   "main": "dist/sdk.min.js",
