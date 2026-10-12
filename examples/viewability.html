@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>advero-sdk — viewability (manual test page)</title>
+</head>
+<body>
+  <p>
+    Manual test for viewable impressions. Open the browser's network tab and
+    filter for <code>ads/</code>. With <code>lazy: true</code> the
+    <code>ads/serve</code> request only happens once the slot nears the
+    viewport. A single <code>ads/view</code> beacon is sent only after the ad
+    has been at least half in view for one continuous second; scrolling past
+    it quickly, or switching tabs, sends nothing.
+  </p>
+
+  <div style="height: 160vh"></div>
+
+  <div id="ad-below-the-fold"></div>
+
+  <div style="height: 100vh"></div>
+
+  <script src="https://cdn.jsdelivr.net/gh/cuongcds/advero-sdk@0.2.0/dist/sdk.min.js"></script>
+  <script>
+    // baseUrl and placementCode are never defaulted by the SDK — replace
+    // both with the real values for your account (see the "Getting your
+    // baseUrl/placementCode" section in ../README.md).
+    AdveroSDK.init({
+      baseUrl: 'https://ads-advero.domain.com', // your Advero ad-serving endpoint — required, no default
+    });
+
+    AdveroSDK.render({
+      el: '#ad-below-the-fold',
+      placementCode: 'YOUR_PLACEMENT_CODE', // required, no default
+      lazy: true,
+    });
+  </script>
+</body>
+</html>

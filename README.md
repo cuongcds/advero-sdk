@@ -14,10 +14,10 @@ cookie/session.
 ### Via jsDelivr (recommended for publishers)
 
 ```html
-<script src="https://cdn.jsdelivr.net/gh/cuongcds/advero-sdk@0.1.2/dist/sdk.min.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/cuongcds/advero-sdk@0.2.0/dist/sdk.min.js"></script>
 ```
 
-Pin to an exact version tag (`@0.1.2`) rather than `@main` — this avoids a
+Pin to an exact version tag (`@0.2.0`) rather than `@main` — this avoids a
 future breaking release changing behavior on your site without notice.
 
 ### Via npm (if you bundle your own site scripts)
@@ -40,7 +40,7 @@ placeholder, not a real host).
 ```html
 <div id="ad-slot-1"></div>
 
-<script src="https://cdn.jsdelivr.net/gh/cuongcds/advero-sdk@0.1.2/dist/sdk.min.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/cuongcds/advero-sdk@0.2.0/dist/sdk.min.js"></script>
 <script>
   AdveroSDK.init({
     baseUrl: 'https://ads-advero.domain.com', // your Advero ad-serving endpoint — required, no default
@@ -98,12 +98,14 @@ front of real visitors.
 | `el` | yes | A CSS selector string or a DOM `Element` where the ad should be rendered. |
 | `placementCode` | yes | The placement's code (`propertyCode-randomCode`), copied from the Placements list. Must be supplied by you — no default. |
 | `viewer` | no | Signed signal about the visitor, produced by **your server** (see "Viewer signal" below): `{ age?, gender?, expires, token }`. Omit it when you do not know the visitor's age or gender. |
+| `lazy` | no | When `true`, the ad is only requested once the slot is about to scroll into view (the returned promise resolves after that). Ads that are never reached are never served. Defaults to `false`. |
 | `showPlaceholder` | no | When there's no eligible advertiser creative, the API returns a placeholder ("Advertise here" banner linking to this placement's Marketplace listing) instead of leaving the slot empty. Defaults to `true`. Pass `false` to render nothing in that case instead of the placeholder. |
 
 Behavior:
 
 - On success (`200` with `{ creative_url, click_url }`), renders `<a href="{click_url}" target="_blank" rel="noopener"><img src="{creative_url}"></a>` inside `el`, wrapped in a `position: relative` frame. This also covers the placeholder response (`{ ..., placeholder: true }`) unless `showPlaceholder: false` was passed.
 - Advertiser creatives carry a small Advero icon in the top-right corner of the image (like Google's AdChoices badge). The icon is loaded from your `baseUrl` (`/assets/images/favicons/favicon_white.png`). Hovering or focusing it expands the label "Ads by Advero"; clicking it opens `baseUrl` (the Advero home page) in a new tab. The badge is a sibling of the creative's click link, so using it never counts as an ad click, and it is styled inline (no stylesheet injected, so strict CSPs are fine). The house placeholder has no badge.
+- **Viewability:** every advertiser ad is measured in the browser. Once at least 50% of the image (30% for very large ads) has been in view for 1 continuous second while the tab is visible, the SDK sends one beacon (`navigator.sendBeacon`) to the signed `view_url` of the response, and only such viewable impressions are billed for CPM campaigns. The thresholds come from the server response. Measurement uses `IntersectionObserver`; where it is missing, or inside a cross-origin iframe (which reports the iframe's own viewport), the impression is not reported as viewable. The house placeholder is never measured.
 - On `204 No Content` or any network/fetch error, renders nothing and does **not** throw — an empty ad slot is normal (no eligible campaign for that placement right now), not a failure.
 - Throws only for integration mistakes: missing/invalid `placementCode`, `el` that doesn't resolve to an element, or calling `render()` before `init()`.
 
@@ -135,5 +137,5 @@ exposes `window.AdveroSDK` when loaded with a plain `<script>` tag.
 
 ## Versioning
 
-Semver. Publishers should pin to an exact version tag (e.g. `@0.1.2`) when
+Semver. Publishers should pin to an exact version tag (e.g. `@0.2.0`) when
 loading from jsDelivr, per `docs/TECHNICAL_DESIGN.md` §2.1.

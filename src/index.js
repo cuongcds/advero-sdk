@@ -118,6 +118,109 @@ function renderBadge(baseUrl) {
   return badge;
 }
 
+function sendBeacon(url, payload) {
+  const body = JSON.stringify(payload);
+  try {
+    if (navigator.sendBeacon && navigator.sendBeacon(url, body)) {
+      return;
+    }
+  } catch (err) {
+    // fall through to fetch
+  }
+  try {
+    fetch(url, { method: 'POST', body: body, keepalive: true, headers: { 'Content-Type': 'text/plain' } });
+  } catch (err) {
+    // never throw into the publisher's page
+  }
+}
+
+/**
+ * Reports a viewable impression: once the ad has been at least `view_ratio`
+ * in view for `view_ms` without interruption (and the tab was visible),
+ * a single beacon goes to the signed `view_url`. The server re-checks every
+ * number; thresholds come from the response so they are never hard-coded here.
+ */
+function trackView(target, img, data) {
+  if (!data.view_url || typeof IntersectionObserver === 'undefined') {
+    return;
+  }
+  const needRatio = typeof data.view_ratio === 'number' ? data.view_ratio : 0.5;
+  const needMs = typeof data.view_ms === 'number' ? data.view_ms : 1000;
+  let observer = null;
+  let timer = null;
+  let sent = false;
+  let started = 0;
+  let ratio = 0;
+  let intervalMin = 1;
+
+  function reset() {
+    clearTimeout(timer);
+    timer = null;
+    started = 0;
+    intervalMin = 1;
+  }
+
+  function finish() {
+    if (sent) {
+      return;
+    }
+    sent = true;
+    const ms = Date.now() - started;
+    const seen = Math.floor(intervalMin * 100);
+    cleanup();
+    sendBeacon(data.view_url, { ms: ms, ratio: seen });
+  }
+
+  function evaluate(isVisible) {
+    if (sent) {
+      return;
+    }
+    if (isVisible && ratio >= needRatio && document.visibilityState === 'visible') {
+      intervalMin = Math.min(intervalMin, ratio);
+      if (!timer) {
+        started = Date.now();
+        timer = setTimeout(finish, needMs);
+      }
+    } else {
+      reset();
+    }
+  }
+
+  function onVisibilityChange() {
+    evaluate(true);
+  }
+
+  function cleanup() {
+    reset();
+    if (observer) {
+      observer.disconnect();
+    }
+    document.removeEventListener('visibilitychange', onVisibilityChange);
+  }
+
+  function start() {
+    const options = { threshold: Array.from({ length: 21 }, function (_, i) { return i / 20; }) };
+    if ('isVisible' in IntersectionObserverEntry.prototype) {
+      // IntersectionObserver v2: also false while another element covers the ad.
+      options.trackVisibility = true;
+      options.delay = 100;
+    }
+    observer = new IntersectionObserver(function (entries) {
+      const entry = entries[entries.length - 1];
+      ratio = entry.intersectionRatio;
+      evaluate(entry.isVisible !== false);
+    }, options);
+    observer.observe(target);
+    document.addEventListener('visibilitychange', onVisibilityChange);
+  }
+
+  if (img.complete && img.naturalWidth > 0) {
+    start();
+  } else {
+    img.addEventListener('load', start, { once: true });
+  }
+}
+
 function renderCreative(container, data) {
   const link = document.createElement('a');
   link.href = data.click_url;
@@ -141,10 +244,14 @@ function renderCreative(container, data) {
 
   container.innerHTML = '';
   container.appendChild(frame);
+
+  if (!data.placeholder) {
+    trackView(frame, img, data);
+  }
 }
 
 /**
- * @param {{ el: string|Element, placementCode: string, showPlaceholder?: boolean, viewer?: { age?: number, gender?: string, expires: number, token: string } }} options
+ * @param {{ el: string|Element, placementCode: string, showPlaceholder?: boolean, lazy?: boolean, viewer?: { age?: number, gender?: string, expires: number, token: string } }} options
  * placementCode: a single fixed-length opaque string ("propertyCode-
  *   randomCode", e.g. "ap-...-89abcdef"), shown with a copy button next to
  *   each placement in the Advero dashboard (Placements list) — copy it
@@ -153,6 +260,9 @@ function renderCreative(container, data) {
  *   returns a placeholder ("Advertise here" banner linking to this
  *   placement's Marketplace listing) instead of a 204. Defaults to true; set
  *   false to render nothing in that case instead.
+ * lazy: when true, the ad is only requested once the slot is about to scroll
+ *   into view (the returned promise resolves after that), so ads that are never
+ *   reached are never served. Defaults to false.
  * viewer: optional signal about the person viewing the page, produced by the
  *   publisher's SERVER (never by this script — the secret must not be in the
  *   page): { age?: number, gender?: 'male'|'female', expires: number (unix
@@ -165,6 +275,22 @@ function renderCreative(container, data) {
  * available (204) or a network error simply results in nothing being
  * rendered — this is normal, not an error condition, so it never throws.
  */
+/** Resolves once `el` is within `margin` px of the viewport (immediately without IntersectionObserver). */
+function whenNearViewport(el, margin) {
+  if (typeof IntersectionObserver === 'undefined') {
+    return Promise.resolve();
+  }
+  return new Promise(function (resolve) {
+    const observer = new IntersectionObserver(function (entries) {
+      if (entries.some(function (entry) { return entry.isIntersecting; })) {
+        observer.disconnect();
+        resolve();
+      }
+    }, { rootMargin: margin + 'px' });
+    observer.observe(el);
+  });
+}
+
 async function render(options) {
   const opts = options || {};
   const el = opts.el;
@@ -181,6 +307,10 @@ async function render(options) {
   const container = resolveElement(el);
   if (!container) {
     throw new Error('AdveroSDK.render: could not resolve "el" to a DOM element.');
+  }
+
+  if (opts.lazy === true) {
+    await whenNearViewport(container, 200);
   }
 
   let url = config.baseUrl + '/ads/serve/' + encodeURIComponent(placementCode);
